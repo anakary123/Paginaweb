@@ -1,6 +1,28 @@
-#mapa-iframe{
-    width:600;
-    height:450;
-    border:0;
-    
+/* Contenedor principal que usa flexbox para alinear el formulario y el mapa */
+.contact-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+/* Formulario que se encuentra en el lado izquierdo */
+.form-container {
+    flex: 1;
+    min-width: 300px;
+    padding: 70px;
+}
+
+/* Card para el mapa */
+.map-card {
+    flex: 1;
+    min-width: 300px; /* Tamaño mínimo para el mapa */
+    height: 500px; /* Establece la altura del mapa */
+}
+
+/* Estilo del iframe para asegurar que ocupe todo el contenedor */
+.map-card iframe {
+    width: 50%;
+    height: 50%;
+    border: none;
 }

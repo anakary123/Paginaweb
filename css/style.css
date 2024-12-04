@@ -18,6 +18,14 @@
    
 }
 
+/*estilos nuestros productos*/
+#texto{
+    display: flex;
+    justify-content: center; 
+    align-items: center;    
+    text-align: center;     
+background-color: #999ea4;
+}
 /*estilos para la galeria*/
 body {
     font-family: Arial, sans-serif;
@@ -155,6 +163,3 @@ iframe {
 #condiciones{
     width: 20px;
 }
-
-
-

@@ -1,33 +1,92 @@
-function obtenerUbicacion() {
-    // Verificar si el navegador soporta geolocalización
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function (position) {
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
+  // Dirección predeterminada (Calle Alonso Cano 44-46, Madrid)
+  const defaultAddress = "Calle Alonso Cano 44-46, Madrid";
 
-            // Llamar a la función para mostrar el mapa con la ubicación del usuario
-            mostrarMapa(lat, lng);
-        }, function (error) {
-            // Si ocurre un error (usuario no otorga permisos, por ejemplo), mostrar ubicación predeterminada
-            mostrarMapa(40.4167754, -3.7037906); // Madrid, España
-        });
-    } else {
-        // Si el navegador no soporta geolocalización, mostrar ubicación predeterminada
-        mostrarMapa(40.4167754, -3.7037906); // Madrid, España
-    }
-}
-// Función para mostrar el mapa con las coordenadas proporcionadas
-function mostrarMapa(lat, lng) {
-    // Obtener el iframe
-    const iframe = document.getElementById("mapa-iframe");
+  // Crear un icono personalizado
+  const clientIcon = L.icon({
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',  // URL del icono
+      iconSize: [25, 41], // Tamaño del icono
+      iconAnchor: [12, 41], // Anclaje del icono
+      popupAnchor: [1, -34], // Donde aparece el texto
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png', // Sombra del icono
+      shadowSize: [41, 41], // Tamaño de la sombra
+  });
 
-    // Generar la URL del mapa con las coordenadas obtenidas
-    const mapaUrl = `https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d24357.019295242535!2d${lng}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd42287b6b64fce1%3A0x13612a317c9129b!2sMadrid!5e0!3m2!1ses!2ses!4v1675253580152!5m2!1ses!2ses`;
+  // Función para obtener coordenadas de una dirección usando la API de OpenStreetMap
+  function getCoordinatesFromAddress(address, callback) {
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+          .then(response => response.json())
+          .then(data => {
+              if (data && data[0]) {
+                  const lat = data[0].lat;
+                  const lon = data[0].lon;
+                  callback(lat, lon);
+              } else {
+                  console.error("Dirección no encontrada.");
+              }
+          })
+          .catch(error => console.error("Error al geocodificar la dirección:", error));
+  }
 
-    // Establecer el nuevo src del iframe
-    iframe.src = mapaUrl;
+  // Función para obtener la ubicación del cliente
+  function getClientLocation() {
+      if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(position => {
+              const lat = position.coords.latitude;
+              const lon = position.coords.longitude;
 
-}
+              // Actualizar el iframe con la ubicación del cliente
+              const iframeSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.01}%2C${lat - 0.01}%2C${lon + 0.01}%2C${lat + 0.01}&layer=mapnik`;
+              document.getElementById('mapFrame').src = iframeSrc;
 
-// Llamar a la función al cargar la página
-obtenerUbicacion();
+              // Crear un mapa con Leaflet
+              const map = L.map('mapFrame').setView([lat, lon], 15); // Ajusta el zoom y la posición inicial
+
+              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                  attribution: '© OpenStreetMap contributors',
+                  maxZoom: 19,
+              }).addTo(map);
+
+              // Añadir un marcador con el icono personalizado
+              L.marker([lat, lon], { icon: clientIcon })
+                  .addTo(map)
+                  .bindPopup('Ubicación del cliente')
+                  .openPopup();
+
+          }, error => {
+              console.error("Error obteniendo la ubicación del cliente:", error);
+              // Si no se obtiene la ubicación del cliente, mostrar la ubicación predeterminada
+              showDefaultLocation();
+          });
+      } else {
+          console.error("Geolocalización no soportada.");
+          // Si no hay soporte de geolocalización, mostrar la ubicación predeterminada
+          showDefaultLocation();
+      }
+  }
+
+  // Función para mostrar la ubicación predeterminada
+  function showDefaultLocation() {
+      // Obtener coordenadas de la dirección predeterminada (Calle Alonso Cano 44-46, Madrid)
+      getCoordinatesFromAddress(defaultAddress, (lat, lon) => {
+          // Actualizar el iframe con la ubicación predeterminada
+          const iframeSrc = `https://www.openstreetmap.org/export/embed.html?bbox=${lon - 0.01}%2C${lat - 0.01}%2C${lon + 0.01}%2C${lat + 0.01}&layer=mapnik`;
+          document.getElementById('mapFrame').src = iframeSrc;
+
+          // Crear un mapa con Leaflet
+          const map = L.map('mapFrame').setView([lat, lon], 15); // Ajusta el zoom y la posición inicial
+
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 19,
+          }).addTo(map);
+
+          // Añadir un marcador con el icono personalizado
+          L.marker([lat, lon], { icon: clientIcon })
+              .addTo(map)
+              .bindPopup('Ubicación predeterminada: Calle Alonso Cano 44-46')
+              .openPopup();
+      });
+  }
+
+  // Intentar obtener la ubicación del cliente al cargar la página
+  getClientLocation();
